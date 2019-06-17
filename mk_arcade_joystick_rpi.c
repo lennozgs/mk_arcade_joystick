@@ -44,13 +44,59 @@ MODULE_LICENSE("GPL");
 
 #define MK_MAX_DEVICES		9
 
+#define XU4 1
+
 #ifdef RPI2
 #define PERI_BASE        0x3F000000
 #else
 #define PERI_BASE        0x20000000
 #endif
 
+#ifdef XU4
+
+#define ODROIDXU_GPIO_MASK      (0xFFFFFF00)
+#define GPIO_BASE               0x13400000      // GPX0,1,2,3
+#define GPIO1_BASE              0x14010000      // GPA0,1,2 GPB0,1,2,3,4
+
+#define GPIO_X1_START       16
+#define GPIO_X1_CON_OFFSET  0x0C20
+#define GPIO_X1_DAT_OFFSET  0x0C24
+#define GPIO_X1_PUD_OFFSET  0x0C28
+#define GPIO_X1_END         23
+
+#define GPIO_X2_START       24
+#define GPIO_X2_CON_OFFSET  0x0C40
+#define GPIO_X2_DAT_OFFSET  0x0C44
+#define GPIO_X2_PUD_OFFSET  0x0C48
+#define GPIO_X2_END         31
+
+#define GPIO_X3_START       32
+#define GPIO_X3_CON_OFFSET  0x0C60
+#define GPIO_X3_DAT_OFFSET  0x0C64
+#define GPIO_X3_PUD_OFFSET  0x0C68
+#define GPIO_X3_END         39
+
+#define GPIO_A0_START       171
+#define GPIO_A0_CON_OFFSET  0x0000
+#define GPIO_A0_DAT_OFFSET  0x0004
+#define GPIO_A0_PUD_OFFSET  0x0008
+#define GPIO_A0_END         178
+
+#define GPIO_A2_START       185
+#define GPIO_A2_CON_OFFSET  0x0040
+#define GPIO_A2_DAT_OFFSET  0x0044
+#define GPIO_A2_PUD_OFFSET  0x0048
+#define GPIO_A2_END         192
+
+#define GPIO_B3_START       207
+#define GPIO_B3_CON_OFFSET  0x00C0
+#define GPIO_B3_DAT_OFFSET  0x00C4
+#define GPIO_B3_PUD_OFFSET  0x00C8
+#define GPIO_B3_END         214
+
+#else
 #define GPIO_BASE                (PERI_BASE + 0x200000) /* GPIO controller */
+#endif
 
 #define INP_GPIO(g) *(gpio+((g)/10)) &= ~(7<<(((g)%10)*3))
 #define OUT_GPIO(g) *(gpio+((g)/10)) |=  (1<<(((g)%10)*3))
@@ -108,7 +154,13 @@ MODULE_LICENSE("GPL");
 
 #define CLEAR_STATUS	BSC_S_CLKT|BSC_S_ERR|BSC_S_DONE
 
+#ifdef XU4
+//static volatile unsigned *gpio, *gpio1;
+static volatile uint32_t *gpio, *gpio1;
+#else
 static volatile unsigned *gpio;
+#endif
+
 static volatile unsigned *bsc1;
 
 struct mk_config {
@@ -182,15 +234,17 @@ static const int mk_max_arcade_buttons = 12;
 static const int mk_max_mcp_arcade_buttons = 16;
 
 // Map of the gpios :                     up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
+#ifdef XU4
+static const int mk_arcade_gpio_maps[] = { 18, 21, 22 };
+#else
 static const int mk_arcade_gpio_maps[] = { 4,  17,    27,  22,    10,    9,      25, 24, 23, 18, 15, 14 };
+#endif
 // 2nd joystick on the b+ GPIOS                 up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
 static const int mk_arcade_gpio_maps_bplus[] = { 11, 5,    6,    13,    19,    26,     21, 20, 16, 12, 7,  8 };
 // Map of the mcp23017 on GPIOA            up, down, left, right, start, select, a,	 b
 static const int mk_arcade_gpioa_maps[] = { 0,  1,    2,    3,     4,     5,	6,	 7 };
-
 // Map of the mcp23017 on GPIOB            tr, y, x, tl, c, tr2, z, tl2
 static const int mk_arcade_gpiob_maps[] = { 0, 1, 2,  3, 4, 5,   6, 7 };
-
 // Map joystick on the b+ GPIOS with TFT      up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
 static const int mk_arcade_gpio_maps_tft[] = { 21, 13,    26,    19,    5,    6,     22, 4, 20, 17, 27,  16 };
 
@@ -203,6 +257,108 @@ static const char *mk_names[] = {
 };
 
 /* GPIO UTILS */
+#ifdef XU4
+static int  gpioToPUPDReg (int pin){
+    switch(pin) {
+	case    GPIO_X1_START...GPIO_X1_END:
+	    return  (GPIO_X1_PUD_OFFSET >> 2);
+	case    GPIO_X2_START...GPIO_X2_END:
+	    return  (GPIO_X2_PUD_OFFSET >> 2);
+	case    GPIO_X3_START...GPIO_X3_END:
+	    return  (GPIO_X3_PUD_OFFSET >> 2);
+	case    GPIO_A0_START...GPIO_A0_END:
+	    return  (GPIO_A0_PUD_OFFSET >> 2);
+	case    GPIO_A2_START...GPIO_A2_END:
+	    return  (GPIO_A2_PUD_OFFSET >> 2);
+	case    GPIO_B3_START...GPIO_B3_END:
+	    return  (GPIO_B3_PUD_OFFSET >> 2);
+	default:
+	    break;
+    }
+
+    return  -1;
+}
+
+static int gpioToGPFSELReg (int pin){
+     switch(pin) {
+        case    GPIO_X1_START...GPIO_X1_END:
+            return  (GPIO_X1_CON_OFFSET >> 2);
+        case    GPIO_X2_START...GPIO_X2_END:
+            return  (GPIO_X2_CON_OFFSET >> 2);
+        case    GPIO_X3_START...GPIO_X3_END:
+            return  (GPIO_X3_CON_OFFSET >> 2);
+        case    GPIO_A0_START...GPIO_A0_END:
+            return  (GPIO_A0_CON_OFFSET >> 2);
+        case    GPIO_A2_START...GPIO_A2_END:
+            return  (GPIO_A2_CON_OFFSET >> 2);
+        case    GPIO_B3_START...GPIO_B3_END:
+            return  (GPIO_B3_CON_OFFSET >> 2);
+        default:
+            break;
+    }
+
+    return  -1;
+}
+
+static int  gpioToShiftReg (int pin){
+    switch(pin) {
+        case    GPIO_X1_START...GPIO_X1_END:
+            return  (pin - GPIO_X1_START);
+        case    GPIO_X2_START...GPIO_X2_END:
+            return  (pin - GPIO_X2_START);
+        case    GPIO_X3_START...GPIO_X3_END:
+            return  (pin - GPIO_X3_START);
+        case    GPIO_A0_START...GPIO_A0_END:
+            return  (pin - GPIO_A0_START);
+        case    GPIO_A2_START...GPIO_A2_END:
+            return  (pin - GPIO_A2_START);
+        case    GPIO_B3_START...GPIO_B3_END:
+            return  (pin - GPIO_B3_START);
+        default:
+            break;
+    }
+
+    return  -1;
+}
+
+static void setGpioPullUps(int gpioNum){
+    int shift;
+
+    shift = (gpioToShiftReg(gpioNum) * 2);
+
+    if(gpioNum < 100){
+        *(gpio  + gpioToPUPDReg(gpioNum)) &= ~(0x3 << shift);
+        *(gpio  + gpioToPUPDReg(gpioNum)) |= (0x3 << shift);
+    }
+    else{
+        *(gpio1 + gpioToPUPDReg(gpioNum)) &= ~(0x3 << shift);
+        *(gpio1 + gpioToPUPDReg(gpioNum)) |= (0x3 << shift);
+    }
+}
+
+static int  gpioToGPLEVReg (int pin){
+    switch(pin) {
+        case    GPIO_X1_START...GPIO_X1_END:
+            return  (GPIO_X1_DAT_OFFSET >> 2);
+        case    GPIO_X2_START...GPIO_X2_END:
+            return  (GPIO_X2_DAT_OFFSET >> 2);
+        case    GPIO_X3_START...GPIO_X3_END:
+            return  (GPIO_X3_DAT_OFFSET >> 2);
+        case    GPIO_A0_START...GPIO_A0_END:
+            return  (GPIO_A0_DAT_OFFSET >> 2);
+        case    GPIO_A2_START...GPIO_A2_END:
+            return  (GPIO_A2_DAT_OFFSET >> 2);
+        case    GPIO_B3_START...GPIO_B3_END:
+            return  (GPIO_B3_DAT_OFFSET >> 2);
+        default:
+            break;
+    }
+
+    return -1;
+}
+
+#else
+
 static void setGpioPullUps(int pullUps) {
     *(gpio + 37) = 0x02;
     udelay(10);
@@ -212,8 +368,21 @@ static void setGpioPullUps(int pullUps) {
     *(gpio + 38) = 0x00;
 }
 
+#endif
+
+
 static void setGpioAsInput(int gpioNum) {
+#ifdef XU4
+    int shift;
+
+    shift = (gpioToShiftReg(gpioNum) * 4);
+    if(gpioNum < 100)
+        *(gpio  + gpioToGPFSELReg(gpioNum)) &= ~(0xF << shift);
+    else
+        *(gpio1 + gpioToGPFSELReg(gpioNum)) &= ~(0xF << shift);
+#else
     INP_GPIO(gpioNum);
+#endif
 }
 
 static int getPullUpMask(int gpioMap[]){
@@ -316,7 +485,15 @@ static void mk_gpio_read_packet(struct mk_pad * pad, unsigned char *data) {
 
     for (i = 0; i < mk_max_arcade_buttons; i++) {
         if(pad->gpio_maps[i] != -1){    // to avoid unused buttons
+#ifdef XU4
+           int read;
+           if(pad->gpio_maps[i] < 100)
+               read = *(gpio  + gpioToGPLEVReg(pad->gpio_maps[i])) & (1 << gpioToShiftReg(pad->gpio_maps[i])) ? 1 : 0;
+           else
+               read = *(gpio1 + gpioToGPLEVReg(pad->gpio_maps[i])) & (1 << gpioToShiftReg(pad->gpio_maps[i])) ? 1 : 0;
+#else
             int read = GPIO_READ(pad->gpio_maps[i]);
+#endif
             if (read == 0) data[i] = 1;
             else data[i] = 0;
         }else data[i] = 0;
@@ -495,8 +672,14 @@ static int __init mk_setup_pad(struct mk *mk, int idx, int pad_type_arg) {
             if(pad->gpio_maps[i] != -1){    // to avoid unused buttons
                  setGpioAsInput(pad->gpio_maps[i]);
             }                
+
+#ifdef XU4
+            setGpioPullUps(pad->gpio_maps[i]);
+#endif
         }
+#ifndef XU4
         setGpioPullUps(getPullUpMask(pad->gpio_maps));
+#endif
         printk("GPIO configured for pad%d\n", idx);
     }else{
         i2c_init();
@@ -591,6 +774,12 @@ static int __init mk_init(void) {
         pr_err("io remap failed\n");
         return -EBUSY;
     }
+#ifdef XU4
+    if ((gpio1 = ioremap(GPIO1_BASE, 0xB0)) == NULL) {
+        pr_err("io remap failed\n");
+        return -EBUSY;
+    }
+#endif
     /* Set up i2c pointer for direct register access */
     if ((bsc1 = ioremap(BSC1_BASE, 0xB0)) == NULL) {
         pr_err("io remap failed\n");

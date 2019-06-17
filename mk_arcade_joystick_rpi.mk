@@ -5,8 +5,10 @@
 ################################################################################
 
 MK_ARCADE_JOYSTICK_RPI_VERSION = v0.1.7
-MK_ARCADE_JOYSTICK_RPI_SITE = https://gitlab.com/recalbox/mk_arcade_joystick_rpi
-MK_ARCADE_JOYSTICK_RPI_SITE_METHOD = git
+MK_ARCADE_JOYSTICK_RPI_SITE = /DATA/recalbox/arcadeo/borne-odroidxu4/package/mk_arcade_joystick_rpi
+MK_ARCADE_JOYSTICK_RPI_SITE_METHOD = local
+#MK_ARCADE_JOYSTICK_RPI_SITE = https://gitlab.com/recalbox/mk_arcade_joystick_rpi
+#MK_ARCADE_JOYSTICK_RPI_SITE_METHOD = git
 MK_ARCADE_JOYSTICK_RPI_DEPENDENCIES = linux
 
 # Needed beacause can't pass cflags to cc
