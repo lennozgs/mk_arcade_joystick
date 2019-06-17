@@ -235,12 +235,19 @@ static const int mk_max_mcp_arcade_buttons = 16;
 
 // Map of the gpios :                     up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
 #ifdef XU4
-static const int mk_arcade_gpio_maps[] = { 18, 21, 22 };
+static const int mk_arcade_gpio_maps[] = { 18, 174, 21, 22, 192, 191, 24, 23, 19, 173, 171, 172 };
 #else
 static const int mk_arcade_gpio_maps[] = { 4,  17,    27,  22,    10,    9,      25, 24, 23, 18, 15, 14 };
 #endif
+
 // 2nd joystick on the b+ GPIOS                 up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
+#ifdef XU4
+//static const int mk_arcade_gpio_maps_bplus[] = { 189, 28, 30, 31, -1, -1, -1, -1, 33, 29, 25, 190 };
+static const int mk_arcade_gpio_maps_bplus[] = {};
+#else
 static const int mk_arcade_gpio_maps_bplus[] = { 11, 5,    6,    13,    19,    26,     21, 20, 16, 12, 7,  8 };
+#endif
+
 // Map of the mcp23017 on GPIOA            up, down, left, right, start, select, a,	 b
 static const int mk_arcade_gpioa_maps[] = { 0,  1,    2,    3,     4,     5,	6,	 7 };
 // Map of the mcp23017 on GPIOB            tr, y, x, tl, c, tr2, z, tl2
@@ -513,6 +520,9 @@ static void mk_input_report(struct mk_pad * pad, unsigned char * data) {
 	}
 	else {
 		for (j = 4; j < mk_max_arcade_buttons; j++) {
+                        if(data[j] == 1){
+                            pr_err("btn : %d", (j - 4));
+                        }
 			input_report_key(dev, mk_arcade_gpio_btn[j - 4], data[j]);
 		}
 	}
@@ -674,7 +684,9 @@ static int __init mk_setup_pad(struct mk *mk, int idx, int pad_type_arg) {
             }                
 
 #ifdef XU4
+            pr_err("@@ DEBUG 1");
             setGpioPullUps(pad->gpio_maps[i]);
+            pr_err("@@ DEBUG 2");
 #endif
         }
 #ifndef XU4
