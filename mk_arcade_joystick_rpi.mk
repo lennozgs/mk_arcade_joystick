@@ -4,12 +4,12 @@
 #
 ################################################################################
 MK_ARCADE_JOYSTICK_RPI_VERSION = v0.1.7
-#MK_ARCADE_JOYSTICK_RPI_SITE = /DATA/recalbox/arcadeo/borne-odroidxu4/package/mk_arcade_joystick_rpi
-MK_ARCADE_JOYSTICK_RPI_SITE = $(@D)/../../../package/mk_arcade_joystick_rpi
+#MK_ARCADE_JOYSTICK_RPI_SITE = $(@D)/../../../package/mk_arcade_joystick_rpi
+MK_ARCADE_JOYSTICK_RPI_SITE = $(CONFIG_DIR)/../package/mk_arcade_joystick_rpi
 MK_ARCADE_JOYSTICK_RPI_SITE_METHOD = local
-#MK_ARCADE_JOYSTICK_RPI_SITE = https://gitlab.com/recalbox/mk_arcade_joystick_rpi
-#MK_ARCADE_JOYSTICK_RPI_SITE_METHOD = git
 MK_ARCADE_JOYSTICK_RPI_DEPENDENCIES = linux
+
+MK_BUILD_DIR = $(BUILD_DIR)/mk_arcade_joystick_rpi-$(MK_ARCADE_JOYSTICK_RPI_VERSION)
 
 # Needed beacause can't pass cflags to cc
 define MK_ARCADE_JOYSTICK_RPI_RPI2_HOOK
@@ -28,9 +28,16 @@ define MK_ARCADE_JOYSTICK_RPI_MAKE_HOOK
 endef
 MK_ARCADE_JOYSTICK_RPI_PRE_BUILD_HOOKS += MK_ARCADE_JOYSTICK_RPI_MAKE_HOOK
 
+ifeq ($(BR2_PACKAGE_UBOOT_XU4),y)
 define MK_ARCADE_JOYSTICK_RPI_BUILD_CMDS
+	$(SED) "s/#define XU4              0/#define XU4              1/g" $(MK_BUILD_DIR)/mk_arcade_joystick_rpi.c
 	$(MAKE) -C $(@D) $(LINUX_MAKE_FLAGS) KERNELDIR=$(LINUX_DIR)
 endef
+else
+define MK_ARCADE_JOYSTICK_RPI_BUILD_CMDS
+    $(MAKE) -C $(@D) $(LINUX_MAKE_FLAGS) KERNELDIR=$(LINUX_DIR)
+endef
+endif
 
 define MK_ARCADE_JOYSTICK_RPI_INSTALL_TARGET_CMDS
 	$(MAKE) -C $(@D) $(LINUX_MAKE_FLAGS) KERNELDIR=$(LINUX_DIR) modules_install

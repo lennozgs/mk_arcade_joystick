@@ -44,7 +44,7 @@ MODULE_LICENSE("GPL");
 
 #define MK_MAX_DEVICES		9
 
-#define XU4 1
+#define XU4              0 
 
 #ifdef RPI2
 #define PERI_BASE        0x3F000000
@@ -52,7 +52,7 @@ MODULE_LICENSE("GPL");
 #define PERI_BASE        0x20000000
 #endif
 
-#ifdef XU4
+#if (XU4 > 0)
 
 #define ODROIDXU_GPIO_MASK      (0xFFFFFF00)
 #define GPIO_BASE               0x13400000      // GPX0,1,2,3
@@ -154,7 +154,7 @@ MODULE_LICENSE("GPL");
 
 #define CLEAR_STATUS	BSC_S_CLKT|BSC_S_ERR|BSC_S_DONE
 
-#ifdef XU4
+#if (XU4 > 0)
 //static volatile unsigned *gpio, *gpio1;
 static volatile uint32_t *gpio, *gpio1;
 #else
@@ -234,14 +234,14 @@ static const int mk_max_arcade_buttons = 12;
 static const int mk_max_mcp_arcade_buttons = 16;
 
 // Map of the gpios :                     up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
-#ifdef XU4
+#if (XU4 > 0)
 static const int mk_arcade_gpio_maps[] = { 18, 174, 21, 22, 192, 191, 24, 23, 19, 173, 171, 172 };
 #else
 static const int mk_arcade_gpio_maps[] = { 4,  17,    27,  22,    10,    9,      25, 24, 23, 18, 15, 14 };
 #endif
 
 // 2nd joystick on the b+ GPIOS                 up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
-#ifdef XU4
+#if (XU4 > 0)
 //static const int mk_arcade_gpio_maps_bplus[] = { 189, 28, 30, 31, -1, -1, -1, -1, 33, 29, 25, 190 };
 static const int mk_arcade_gpio_maps_bplus[] = {};
 #else
@@ -264,7 +264,7 @@ static const char *mk_names[] = {
 };
 
 /* GPIO UTILS */
-#ifdef XU4
+#if (XU4 > 0)
 static int  gpioToPUPDReg (int pin){
     switch(pin) {
 	case    GPIO_X1_START...GPIO_X1_END:
@@ -379,7 +379,7 @@ static void setGpioPullUps(int pullUps) {
 
 
 static void setGpioAsInput(int gpioNum) {
-#ifdef XU4
+#if (XU4 > 0)
     int shift;
 
     shift = (gpioToShiftReg(gpioNum) * 4);
@@ -492,7 +492,7 @@ static void mk_gpio_read_packet(struct mk_pad * pad, unsigned char *data) {
 
     for (i = 0; i < mk_max_arcade_buttons; i++) {
         if(pad->gpio_maps[i] != -1){    // to avoid unused buttons
-#ifdef XU4
+#if (XU4 > 0)
            int read;
            if(pad->gpio_maps[i] < 100)
                read = *(gpio  + gpioToGPLEVReg(pad->gpio_maps[i])) & (1 << gpioToShiftReg(pad->gpio_maps[i])) ? 1 : 0;
@@ -683,13 +683,13 @@ static int __init mk_setup_pad(struct mk *mk, int idx, int pad_type_arg) {
                  setGpioAsInput(pad->gpio_maps[i]);
             }                
 
-#ifdef XU4
+#if (XU4 > 0)
             pr_err("@@ DEBUG 1");
             setGpioPullUps(pad->gpio_maps[i]);
             pr_err("@@ DEBUG 2");
 #endif
         }
-#ifndef XU4
+#if (XU4 <= 0)
         setGpioPullUps(getPullUpMask(pad->gpio_maps));
 #endif
         printk("GPIO configured for pad%d\n", idx);
@@ -786,7 +786,7 @@ static int __init mk_init(void) {
         pr_err("io remap failed\n");
         return -EBUSY;
     }
-#ifdef XU4
+#if (XU4 > 0)
     if ((gpio1 = ioremap(GPIO1_BASE, 0xB0)) == NULL) {
         pr_err("io remap failed\n");
         return -EBUSY;
