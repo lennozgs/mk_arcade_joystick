@@ -233,17 +233,16 @@ static const int mk_data_size = 16;
 static const int mk_max_arcade_buttons = 12;
 static const int mk_max_mcp_arcade_buttons = 16;
 
-// Map of the gpios :                     up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
+// Map of the gpios :                     up,   down,   left,   right,  start,  select, a,  b,  tr, y,    x,    tl
 #if (XU4 > 0)
-static const int mk_arcade_gpio_maps[] = { 18, 174, 21, 22, 192, 191, 24, 23, 19, 173, 171, 172 };
+static const int mk_arcade_gpio_maps[] = { 18,  174,    21,     22,     192,    191,    24, 23, 19, 173,  171,  172 };
 #else
 static const int mk_arcade_gpio_maps[] = { 4,  17,    27,  22,    10,    9,      25, 24, 23, 18, 15, 14 };
 #endif
 
-// 2nd joystick on the b+ GPIOS                 up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
+// 2nd joystick on the b+ GPIOS                 up,     down,   left,   right,  start,  select, a,    b,    tr,  y,   x,    tl
 #if (XU4 > 0)
-//static const int mk_arcade_gpio_maps_bplus[] = { 189, 28, 30, 31, -1, -1, -1, -1, 33, 29, 25, 190 };
-static const int mk_arcade_gpio_maps_bplus[] = {};
+static const int mk_arcade_gpio_maps_bplus[] = {25,     188,    189,    190,    30,     29,     209,  210,  33,  28,  187,  31 };
 #else
 static const int mk_arcade_gpio_maps_bplus[] = { 11, 5,    6,    13,    19,    26,     21, 20, 16, 12, 7,  8 };
 #endif
