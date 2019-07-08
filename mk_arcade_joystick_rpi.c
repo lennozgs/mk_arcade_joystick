@@ -519,9 +519,11 @@ static void mk_input_report(struct mk_pad * pad, unsigned char * data) {
 	}
 	else {
 		for (j = 4; j < mk_max_arcade_buttons; j++) {
+                        /*
                         if(data[j] == 1){
                             pr_err("btn : %d", (j - 4));
                         }
+                        */
 			input_report_key(dev, mk_arcade_gpio_btn[j - 4], data[j]);
 		}
 	}
@@ -683,9 +685,8 @@ static int __init mk_setup_pad(struct mk *mk, int idx, int pad_type_arg) {
             }                
 
 #if (XU4 > 0)
-            pr_err("@@ DEBUG 1");
+            pr_err("@@ DEBUG setGpioPullUps");
             setGpioPullUps(pad->gpio_maps[i]);
-            pr_err("@@ DEBUG 2");
 #endif
         }
 #if (XU4 <= 0)
